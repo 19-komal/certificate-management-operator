@@ -1,0 +1,46 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: certificate-management-operator-role
+rules:
+- apiGroups:
+  - certs.openshift.io
+  resources:
+  - certificaterotations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - certs.openshift.io
+  resources:
+  - certificaterotations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - certs.openshift.io
+  resources:
+  - certificaterotations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch

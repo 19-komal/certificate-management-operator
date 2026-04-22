@@ -1,0 +1,178 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: certificaterotations.certs.openshift.io
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.13.0
+spec:
+  group: certs.openshift.io
+  names:
+    kind: CertificateRotation
+    listKind: CertificateRotationList
+    plural: certificaterotations
+    shortNames:
+    - certrot
+    singular: certificaterotation
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.thresholdDays
+      name: Threshold
+      type: integer
+    - jsonPath: .status.totalCertificates
+      name: Total
+      type: integer
+    - jsonPath: .status.expiringCertificates
+      name: Expiring
+      type: integer
+    - jsonPath: .status.expiredCertificates
+      name: Expired
+      type: integer
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: CertificateRotation is the Schema for the certificaterotations API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object.'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents.'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CertificateRotationSpec defines the desired state of CertificateRotation
+            properties:
+              alertOnly:
+                default: true
+                description: AlertOnly if true, only alerts but doesn't rotate certificates
+                type: boolean
+              autoRotate:
+                default: false
+                description: AutoRotate enables automatic certificate rotation via cert-manager
+                type: boolean
+              checkIntervalMinutes:
+                default: 60
+                description: CheckIntervalMinutes defines how often to check certificates
+                maximum: 1440
+                minimum: 5
+                type: integer
+              namespaces:
+                description: Namespaces to watch for TLS certificates. Empty means all namespaces.
+                items:
+                  type: string
+                type: array
+              thresholdDays:
+                default: 30
+                description: ThresholdDays is the number of days before expiry to trigger rotation
+                maximum: 365
+                minimum: 1
+                type: integer
+            type: object
+          status:
+            description: CertificateRotationStatus defines the observed state of CertificateRotation
+            properties:
+              certificates:
+                description: Certificates contains the status of all monitored certificates
+                items:
+                  description: CertificateStatus represents the status of a single certificate
+                  properties:
+                    daysUntilExpiry:
+                      description: DaysUntilExpiry calculated days until certificate expires
+                      type: integer
+                    expiryDate:
+                      description: ExpiryDate of the certificate
+                      format: date-time
+                      type: string
+                    lastChecked:
+                      description: LastChecked timestamp
+                      format: date-time
+                      type: string
+                    name:
+                      description: Name of the secret containing the certificate
+                      type: string
+                    namespace:
+                      description: Namespace of the secret
+                      type: string
+                    status:
+                      description: Status of the certificate (Valid, Expiring, Expired, Rotated, Error)
+                      type: string
+                  required:
+                  - daysUntilExpiry
+                  - expiryDate
+                  - lastChecked
+                  - name
+                  - namespace
+                  - status
+                  type: object
+                type: array
+              conditions:
+                description: Conditions represent the latest available observations of the CertificateRotation's state
+                items:
+                  description: Condition contains details for one aspect of the current state
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              expiredCertificates:
+                description: ExpiredCertificates is the number of already expired certificates
+                type: integer
+              expiringCertificates:
+                description: ExpiringCertificates is the number of certificates expiring within threshold
+                type: integer
+              lastReconcileTime:
+                description: LastReconcileTime is the timestamp of the last reconciliation
+                format: date-time
+                type: string
+              rotatedCertificates:
+                description: RotatedCertificates is the number of successfully rotated certificates
+                type: integer
+              totalCertificates:
+                description: TotalCertificates is the total number of certificates being monitored
+                type: integer
+            required:
+            - expiredCertificates
+            - expiringCertificates
+            - rotatedCertificates
+            - totalCertificates
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

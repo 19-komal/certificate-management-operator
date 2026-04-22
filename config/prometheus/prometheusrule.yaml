@@ -1,0 +1,48 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: certificate-expiry-alerts
+  namespace: openshift-operators
+  labels:
+    prometheus: k8s
+    role: alert-rules
+spec:
+  groups:
+  - name: certificate-expiry
+    interval: 30s
+    rules:
+    - alert: CertificateExpiringSoon
+      expr: cert_expiry_days_remaining < 30 and cert_expiry_days_remaining > 7
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Certificate expiring soon"
+        description: "Certificate {{ $labels.secret }} in namespace {{ $labels.namespace }} expires in {{ $value }} days"
+
+    - alert: CertificateExpiringCritical
+      expr: cert_expiry_days_remaining <= 7 and cert_expiry_days_remaining > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Certificate expiring in less than 7 days"
+        description: "Certificate {{ $labels.secret }} in namespace {{ $labels.namespace }} expires in {{ $value }} days - URGENT ACTION REQUIRED"
+
+    - alert: CertificateExpired
+      expr: cert_expiry_days_remaining <= 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Certificate has expired"
+        description: "Certificate {{ $labels.secret }} in namespace {{ $labels.namespace }} has EXPIRED {{ $value }} days ago"
+
+    - alert: CertificateRotationFailed
+      expr: rate(cert_rotation_total{status="failed"}[5m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Certificate rotation failed"
+        description: "Failed to rotate certificate {{ $labels.secret }} in namespace {{ $labels.namespace }}"

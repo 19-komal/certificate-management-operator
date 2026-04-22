@@ -1,0 +1,25 @@
+apiVersion: certs.openshift.io/v1
+kind: CertificateRotation
+metadata:
+  name: cluster-certificate-monitor
+spec:
+  # Watch all namespaces (empty array means all namespaces)
+  # To watch specific namespaces, list them here:
+  # namespaces:
+  #   - default
+  #   - openshift-ingress
+  #   - openshift-apiserver
+
+  # Alert when certificates have less than 30 days until expiry
+  thresholdDays: 30
+
+  # Check certificates every 60 minutes
+  checkIntervalMinutes: 60
+
+  # Alert only mode - don't attempt auto-rotation
+  # Set to false if you want to enable auto-rotation (requires cert-manager)
+  alertOnly: true
+
+  # Auto-rotate certificates using cert-manager
+  # Only works if alertOnly is false and cert-manager is installed
+  autoRotate: false
